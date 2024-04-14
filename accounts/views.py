@@ -1,14 +1,31 @@
 from django.http.response import HttpResponse
 from django.shortcuts import redirect, render
 
-from accounts.utils import detectUser
 from vendor.forms import VendorForm
 from .forms import UserForm
 from .models import User, UserProfile
 from django.contrib import messages, auth
-from django.contrib.auth.decorators import login_required
+from accounts.utils import detectUser, send_verification_email
+from django.contrib.auth.decorators import login_required, user_passes_test
 
-# Create your views here.
+from django.core.exceptions import PermissionDenied
+# Restrict the vendor from accessing the customer page
+
+def check_role_vendor(user):
+    if user.role == 1:
+        return True
+    else:
+        raise PermissionDenied
+
+# Restrict the customer from accessing the vendor page
+
+def check_role_customer(user):
+    if user.role == 2:
+        return True
+    else:
+        raise PermissionDenied
+ 
+
 def registerUser(request):
     if request.user.is_authenticated:
         messages.warning(request, "You are already logged in!")
@@ -33,6 +50,9 @@ def registerUser(request):
             user = User.objects.create_user(first_name=first_name, last_name=last_name, username=username, email =email, password=password)
             user.role = User.CUSTOMER
             user.save()
+            
+            # Send verification email
+            send_verification_email(request, user)
             messages.success(request, 'Your account has been registered successfully!')
             return redirect('registerUser')
         else:
@@ -67,6 +87,9 @@ def registerVendor(request):
             user_profile = UserProfile.objects.get(user=user)
             vendor.user_profile = user_profile
             vendor.save()
+            
+            # Send verification email            
+            send_verification_email(request, user)
             messages.success(request, 'Your account has been registered successfully! Please wait for the approval.')
             return redirect('registerVendor')
         else: 
@@ -81,6 +104,10 @@ def registerVendor(request):
         'v_form': v_form,
     }
     return render(request, 'accounts/registerVendor.html', context)
+
+def activate(request, uidb64, token):
+    # Activate the user by setting the is_active status to True
+    return
 
 def login(request):
     if request.user.is_authenticated:
@@ -113,9 +140,15 @@ def myAccount(request):
     redirectUrl = detectUser(user)
     return redirect(redirectUrl)
 
+
+@login_required(login_url='login')
+@user_passes_test(check_role_customer)
 def custDashboard(request):
     return render(request, 'accounts/custDashboard.html')
 
+
+@login_required(login_url='login')
+@user_passes_test(check_role_vendor)
 def vendorDashboard(request):
     return render(request, 'accounts/vendorDashboard.html')
 
