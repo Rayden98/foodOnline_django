@@ -172,6 +172,3 @@ cython_debug/
 #.idea/
 
 # End of https://www.toptal.com/developers/gitignore/api/django
-
-## Delete this at the end 
-/foodOnline_main/settings.py
