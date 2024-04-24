@@ -26,9 +26,9 @@
 
     <link rel="stylesheet" href="{% static 'css/custom.css' %}" />
 
-    {% comment %} {% if '/profile/' in request.path %} {% endcomment %}
+    {% if '/' in request.path or 'profile' in request.path %}
     <script src="https://maps.googleapis.com/maps/api/js?key={{GOOGLE_API_KEY}}&libraries=places&callback=initAutoComplete" defer></script>
-    {% comment %} {% endif %} {% endcomment %}
+    {% endif %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
     <script src="{% static 'js/custom.js' %}"></script>
 
